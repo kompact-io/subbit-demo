@@ -32,6 +32,76 @@
         subbit-server
       ];
 
+      # ---- tape -> video build ----------------------------------------
+      # Every tapes/*.tape file gets turned into a nix package that renders
+      # it with vhs. `nix build .#tapes-<name>` produces the video(s) that
+      # tape's `Output ...` lines declare, under $out.
+      tapeDir = ./tapes;
+      tapeFiles =
+        builtins.attrNames
+        (lib.filterAttrs (n: t: t == "regular" && lib.hasSuffix ".tape" n)
+          (builtins.readDir tapeDir));
+
+      mkTapeVideo = tapeFileName: let
+        name = lib.removeSuffix ".tape" tapeFileName;
+      in
+        pkgs.stdenv.mkDerivation {
+          pname = "tape-${name}";
+          version = "0-unstable";
+          # whole repo, since tapes reference ./tmux/echo.yaml etc by relative path
+          src = lib.cleanSourceWith {
+            src = ./.;
+            filter = path: type:
+              baseNameOf path != "out" && baseNameOf path != "result";
+          };
+
+          nativeBuildInputs =
+            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go]
+            ++ subbitBins;
+
+          dontConfigure = true;
+
+          buildPhase = ''
+            runHook preBuild
+            export HOME="$TMPDIR"
+            export VHS_NO_SANDBOX=true
+            mkdir -p out
+            vhs "tapes/${tapeFileName}" 2>&1 | tee vhs.log
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            mkdir -p "$out"
+            cp -r out/. "$out"/
+            runHook postInstall
+          '';
+
+          # vhs drives ttyd + a headless chromium (via rod). Chromium's own
+          # sandbox can't set up inside nix's build sandbox, so we opt this
+          # derivation out of it (see NixOS/nixpkgs#455564). This attribute
+          # only takes effect if the daemon has `sandbox = relaxed;` (or
+          # `sandbox-fallback = true;`) in nix.conf -- set that locally and
+          # in CI, or fall back to `nix build --no-sandbox`.
+          __noChroot = true;
+
+          meta.description = "Rendered video(s) for tapes/${tapeFileName}";
+        };
+
+      tapePackages =
+        lib.listToAttrs
+        (map
+          (f: {
+            name = "tape-${lib.removeSuffix ".tape" f}";
+            value = mkTapeVideo f;
+          })
+          tapeFiles);
+
+      allTapes = pkgs.symlinkJoin {
+        name = "all-tapes";
+        paths = builtins.attrValues tapePackages;
+      };
+
       scripts = {
         record-tape = pkgs.writeShellApplication {
           name = "record-tape";
@@ -73,6 +143,15 @@
             fi
             echo "Recording mic-only narration to $1. Ctrl-C to stop."
             wf-recorder -f "$1" --audio --no-cursor -g "0,0 1x1"
+          '';
+        };
+
+        build-site = pkgs.writeShellApplication {
+          name = "build-site";
+          runtimeInputs = [pkgs.jq pkgs.mustache-go pkgs.gawk pkgs.findutils pkgs.coreutils];
+          meta.description = "Render site/index.mustache: build-site <videos-dir> <site-out-dir>";
+          text = ''
+            exec bash ${./scripts/build-site.sh} "$@" ${./site}
           '';
         };
 
@@ -125,7 +204,8 @@
             asciinema
             ffmpeg
             yq-go # for the tomlset helper (config editing)
-            jq # for parsing subbit-cli's JSON keyring output
+            jq # for parsing subbit-cli's JSON keyring output, and build-site
+            mustache-go # for build-site (renders site/index.mustache)
           ]
           ++ subbitBins ++ builtins.attrValues scripts;
 
@@ -143,5 +223,7 @@
           meta.description = drv.meta.description;
         })
         scripts;
+
+      packages = tapePackages // {all-tapes = allTapes;};
     });
 }
