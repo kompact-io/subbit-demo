@@ -13,7 +13,9 @@
     flake-utils,
     subbit-xyz,
   }:
-    flake-utils.lib.eachDefaultSystem (system: let
+    # FIXME :: aiken flake broken on darwin builds. disable until fixed
+    # flake-utils.lib.eachDefaultSystem (system: let
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system: let
       pkgs = import nixpkgs {inherit system;};
       lib = pkgs.lib;
 
