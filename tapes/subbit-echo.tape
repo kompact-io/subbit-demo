@@ -37,10 +37,10 @@ Enter
 Wait+Screen
 Sleep 200ms
 
-Type "as RUST_LOG=info subbit-server serve"
+Type "as subbit-server serve"
 Enter
 # FIXME : Make this more robust!
-Wait+Screen /listen/
+Wait+Screen /subbit_server: Starting/
 Sleep 200ms
 
 # --- echo-proxy ---
@@ -56,7 +56,7 @@ Sleep 200ms
 
 Type "as echo-proxy run"
 Enter
-Wait+Screen /listen/
+Wait+Screen /echo_proxy::cli: Starting/
 Sleep 200ms
 
 # --- echo-server ---
@@ -67,7 +67,7 @@ Sleep 200ms
 
 Type "as echo-server"
 Enter
-Wait+Screen /listening on/
+Wait+Screen /echo_server: Starting/
 Sleep 200ms
 
 # --- consumer: own init, own keys, own ledger row ---
