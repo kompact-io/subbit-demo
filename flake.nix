@@ -20,9 +20,6 @@
       lib = pkgs.lib;
 
       subbitPkgs = subbit-xyz.packages.${system};
-      # real bin names on PATH once in the shell: echo-server, echo-client,
-      # echo-proxy, mock-index (+ naive-index), subbit-cli, subbit-server —
-      # no aliasing, no per-call `nix shell ... -c ...` wrapping/lag.
       subbitBins = with subbitPkgs; [
         subbit-examples-echo-server
         subbit-examples-echo-client
@@ -31,6 +28,69 @@
         subbit-cli
         subbit-server
       ];
+
+      tapeDir = ./tapes;
+      tapeFiles =
+        builtins.attrNames
+        (lib.filterAttrs (n: t: t == "regular" && lib.hasSuffix ".tape" n)
+          (builtins.readDir tapeDir));
+
+      mkTapeVideo = tapeFileName: let
+        name = lib.removeSuffix ".tape" tapeFileName;
+      in
+        pkgs.stdenv.mkDerivation {
+          pname = "tape-${name}";
+          version = "0-unstable";
+          # whole repo, since tapes reference ./tmux/echo.yaml etc by relative path
+          src = lib.cleanSourceWith {
+            src = ./.;
+            filter = path: type:
+              baseNameOf path != "out" && baseNameOf path != "result";
+          };
+
+          nativeBuildInputs =
+            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go]
+            ++ subbitBins;
+
+          dontConfigure = true;
+
+          buildPhase = ''
+            runHook preBuild
+            export HOME="$TMPDIR"
+            export VHS_NO_SANDBOX=true
+            mkdir -p out
+            vhs "tapes/${tapeFileName}" 2>&1 | tee vhs.log
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            mkdir -p "$out"
+            cp -r out/. "$out"/
+            runHook postInstall
+          '';
+
+          # vhs drives ttyd + a headless chromium (via rod). Chromium's own
+          # sandbox can't set up inside nix's build sandbox, so we opt this
+          # derivation out of it (see NixOS/nixpkgs#455564). 
+          __noChroot = true;
+
+          meta.description = "Rendered video(s) for tapes/${tapeFileName}";
+        };
+
+      tapePackages =
+        lib.listToAttrs
+        (map
+          (f: {
+            name = "tape-${lib.removeSuffix ".tape" f}";
+            value = mkTapeVideo f;
+          })
+          tapeFiles);
+
+      allTapes = pkgs.symlinkJoin {
+        name = "all-tapes";
+        paths = builtins.attrValues tapePackages;
+      };
 
       scripts = {
         record-tape = pkgs.writeShellApplication {
@@ -76,6 +136,15 @@
           '';
         };
 
+        build-site = pkgs.writeShellApplication {
+          name = "build-site";
+          runtimeInputs = [pkgs.jq pkgs.mustache-go pkgs.gawk pkgs.findutils pkgs.coreutils];
+          meta.description = "Render site/index.mustache: build-site <videos-dir> <site-out-dir>";
+          text = ''
+            exec bash ${./scripts/build-site.sh} "$@"
+          '';
+        };
+
         mux-voiceover = pkgs.writeShellApplication {
           name = "mux-voiceover";
           runtimeInputs = [pkgs.ffmpeg];
@@ -115,8 +184,9 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs;
           [
-            bashInteractive # plain `bash` lacks readline (bind/complete); this fixes
+            # plain `bash` lacks readline (bind/complete); this fixes
             # "bind: command not found" when tmux/vhs spawn a bash shell
+            bashInteractive 
             tmux
             tmuxp
             vhs
@@ -125,7 +195,8 @@
             asciinema
             ffmpeg
             yq-go # for the tomlset helper (config editing)
-            jq # for parsing subbit-cli's JSON keyring output
+            jq # for parsing subbit-cli's JSON keyring output, and build-site
+            mustache-go # for build-site (renders site/index.mustache)
           ]
           ++ subbitBins ++ builtins.attrValues scripts;
 
@@ -143,5 +214,7 @@
           meta.description = drv.meta.description;
         })
         scripts;
+
+      packages = tapePackages // {all-tapes = allTapes;};
     });
 }

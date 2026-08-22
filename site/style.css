@@ -1,0 +1,95 @@
+:root {
+  --fg: #1a1a1a;
+  --bg: #fdfdfb;
+  --muted: #6b6b6b;
+  --rule: #d8d8d3;
+  --max: 46rem;
+}
+
+* { box-sizing: border-box; }
+
+html { color-scheme: light; }
+
+body {
+  margin: 0;
+  padding: 3rem 1.25rem 6rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+main {
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 2.5rem;
+}
+
+header .logo {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+header nav {
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+
+header nav a {
+  color: var(--muted);
+  margin-right: 1rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+p.tagline {
+  color: var(--muted);
+  margin-top: 0;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 2.25rem 0;
+}
+
+a { color: inherit; text-decoration-color: var(--rule); }
+a:hover { text-decoration-color: var(--fg); }
+
+.tape {
+  margin-bottom: 3rem;
+}
+
+.tape h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.6rem;
+  font-weight: 600;
+}
+
+.tape .meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+}
+
+video {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #000;
+}
+
+footer {
+  color: var(--muted);
+  font-size: 0.85rem;
+}

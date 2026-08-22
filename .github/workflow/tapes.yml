@@ -1,0 +1,66 @@
+name: tapes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tapes/**"
+      - "tmux/**"
+      - "flake.nix"
+      - "flake.lock"
+      - "site/**"
+      - "scripts/build-site.sh"
+      - ".github/workflows/tapes.yml"
+  pull_request:
+    paths:
+      - "tapes/**"
+      - "tmux/**"
+      - "flake.nix"
+      - "flake.lock"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tapes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          # vhs launches a headless chromium (via ttyd/rod) which can't set
+          # up its own sandbox inside nix's build sandbox, so tape
+          # derivations opt out via __noChroot -- that only works if the
+          # daemon allows it.
+          extra-conf: |
+            sandbox = relaxed
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: build all tapes
+        run: nix build .#all-tapes -L --print-build-logs
+
+      - name: upload rendered videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: tapes
+          path: result/
+          if-no-files-found: error
+
+      - name: build site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: nix run .#build-site -- result _site
+
+      - name: deploy to gh-pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          publish_branch: gh-pages

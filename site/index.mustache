@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tapes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="logo">&#128252; tapes</div>
+      <nav><a href="https://github.com/kompact-io/subbit-xyz">github</a></nav>
+    </header>
+
+    <h1>CLI demo tapes</h1>
+    <p class="tagline">Terminal demos, recorded as code with <a href="https://github.com/charmbracelet/vhs">vhs</a>, built reproducibly with Nix, rendered on every push.</p>
+
+    <hr>
+
+{{#videos}}
+    <section class="tape">
+      <h2>{{title}}</h2>
+      <video controls preload="metadata" muted playsinline>
+        <source src="videos/{{file}}" type="{{mime}}">
+      </video>
+      <p class="meta">tapes/{{stem}}.tape &middot; built in CI</p>
+    </section>
+{{/videos}}
+{{^videos}}
+    <p>No tapes have been rendered yet.</p>
+{{/videos}}
+
+    <hr>
+    <footer>Rendered from <code>tapes/*.tape</code> by GitHub Actions.</footer>
+  </main>
+</body>
+</html>
