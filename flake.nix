@@ -61,11 +61,13 @@
 
           buildPhase = ''
             runHook preBuild
+            set -o pipefail
             export HOME="$TMPDIR"
             export VHS_NO_SANDBOX=true
             export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             mkdir -p out
             vhs "tapes/${tapeFileName}" 2>&1 | tee vhs.log
+            [ -n "$(find out -type f -print -quit)" ] || { echo "error: vhs produced no output in out/" >&2; exit 1; }
             runHook postBuild
           '';
 
