@@ -20,6 +20,9 @@
       lib = pkgs.lib;
 
       subbitPkgs = subbit-xyz.packages.${system};
+      # real bin names on PATH once in the shell: echo-server, echo-client,
+      # echo-proxy, mock-index (+ naive-index), subbit-cli, subbit-server —
+      # no aliasing, no per-call `nix shell ... -c ...` wrapping/lag.
       subbitBins = with subbitPkgs; [
         subbit-examples-echo-server
         subbit-examples-echo-client
@@ -29,6 +32,10 @@
         subbit-server
       ];
 
+      # ---- tape -> video build ----------------------------------------
+      # Every tapes/*.tape file gets turned into a nix package that renders
+      # it with vhs. `nix build .#tapes-<name>` produces the video(s) that
+      # tape's `Output ...` lines declare, under $out.
       tapeDir = ./tapes;
       tapeFiles =
         builtins.attrNames
@@ -72,7 +79,10 @@
 
           # vhs drives ttyd + a headless chromium (via rod). Chromium's own
           # sandbox can't set up inside nix's build sandbox, so we opt this
-          # derivation out of it (see NixOS/nixpkgs#455564). 
+          # derivation out of it (see NixOS/nixpkgs#455564). This attribute
+          # only takes effect if the daemon has `sandbox = relaxed;` (or
+          # `sandbox-fallback = true;`) in nix.conf -- set that locally and
+          # in CI, or fall back to `nix build --no-sandbox`.
           __noChroot = true;
 
           meta.description = "Rendered video(s) for tapes/${tapeFileName}";
@@ -141,7 +151,7 @@
           runtimeInputs = [pkgs.jq pkgs.mustache-go pkgs.gawk pkgs.findutils pkgs.coreutils];
           meta.description = "Render site/index.mustache: build-site <videos-dir> <site-out-dir>";
           text = ''
-            exec bash ${./scripts/build-site.sh} "$@"
+            exec bash ${./scripts/build-site.sh} "$@" ${./site}
           '';
         };
 
@@ -184,9 +194,8 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs;
           [
-            # plain `bash` lacks readline (bind/complete); this fixes
+            bashInteractive # plain `bash` lacks readline (bind/complete); this fixes
             # "bind: command not found" when tmux/vhs spawn a bash shell
-            bashInteractive 
             tmux
             tmuxp
             vhs
