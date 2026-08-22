@@ -3,7 +3,7 @@
 Require tmux
 Require tmuxp
 
-Output out/subbit-echo.mp4
+Output out/subbit-echo.webm
 
 Set Shell "bash"
 Set FontSize 14
