@@ -40,8 +40,6 @@ jobs:
             sandbox = relaxed
             accept-flake-config = true
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-
       - name: build all tapes
         run: nix build .#all-tapes -L --print-build-logs
 
