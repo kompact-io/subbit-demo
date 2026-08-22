@@ -31,7 +31,7 @@ Sleep 200ms
 
 Type "as echo-server"
 Enter
-Wait+Screen /listening on/
+Wait+Screen /echo_server: Starting/
 Sleep 200ms
 
 # --- client ---

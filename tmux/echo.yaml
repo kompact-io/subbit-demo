@@ -5,7 +5,7 @@ options:
   pane-border-format: " #{pane_title} "
 
 windows:
-  - window_name: no-subbit
+  - window_name: echo-demo
     panes:
       - shell_command:
           - unset PROMPT_COMMAND
