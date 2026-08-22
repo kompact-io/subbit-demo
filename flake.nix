@@ -54,7 +54,7 @@
           };
 
           nativeBuildInputs =
-            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go]
+            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go pkgs.cacert]
             ++ subbitBins;
 
           dontConfigure = true;
@@ -63,6 +63,7 @@
             runHook preBuild
             export HOME="$TMPDIR"
             export VHS_NO_SANDBOX=true
+            export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             mkdir -p out
             vhs "tapes/${tapeFileName}" 2>&1 | tee vhs.log
             runHook postBuild
