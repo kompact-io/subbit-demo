@@ -1,6 +1,11 @@
 {
   description = "CLI tool demo environment (tmux + vhs + wf-recorder + voiceover)";
 
+  nixConfig = {
+    extra-substituters = ["https://subbit-xyz.cachix.org"];
+    extra-trusted-public-keys = ["subbit-xyz.cachix.org-1:nPswLlhI42dBqzVGfsBocI2WlpX5CpHYdCN2KEoedT8="];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -20,9 +25,6 @@
       lib = pkgs.lib;
 
       subbitPkgs = subbit-xyz.packages.${system};
-      # real bin names on PATH once in the shell: echo-server, echo-client,
-      # echo-proxy, mock-index (+ naive-index), subbit-cli, subbit-server —
-      # no aliasing, no per-call `nix shell ... -c ...` wrapping/lag.
       subbitBins = with subbitPkgs; [
         subbit-examples-echo-server
         subbit-examples-echo-client
@@ -32,10 +34,6 @@
         subbit-server
       ];
 
-      # ---- tape -> video build ----------------------------------------
-      # Every tapes/*.tape file gets turned into a nix package that renders
-      # it with vhs. `nix build .#tapes-<name>` produces the video(s) that
-      # tape's `Output ...` lines declare, under $out.
       tapeDir = ./tapes;
       tapeFiles =
         builtins.attrNames
@@ -79,10 +77,7 @@
 
           # vhs drives ttyd + a headless chromium (via rod). Chromium's own
           # sandbox can't set up inside nix's build sandbox, so we opt this
-          # derivation out of it (see NixOS/nixpkgs#455564). This attribute
-          # only takes effect if the daemon has `sandbox = relaxed;` (or
-          # `sandbox-fallback = true;`) in nix.conf -- set that locally and
-          # in CI, or fall back to `nix build --no-sandbox`.
+          # derivation out of it (see NixOS/nixpkgs#455564). 
           __noChroot = true;
 
           meta.description = "Rendered video(s) for tapes/${tapeFileName}";

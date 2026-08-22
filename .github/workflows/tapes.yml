@@ -20,15 +20,14 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write
-
-concurrency:
-  group: tapes-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: tapes-build-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
 
@@ -36,17 +35,17 @@ jobs:
         with:
           # vhs launches a headless chromium (via ttyd/rod) which can't set
           # up its own sandbox inside nix's build sandbox, so tape
-          # derivations opt out via __noChroot -- that only works if the
-          # daemon allows it.
+          # derivations opt out via __noChroot
           extra-conf: |
             sandbox = relaxed
+            accept-flake-config = true
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: build all tapes
         run: nix build .#all-tapes -L --print-build-logs
 
-      - name: upload rendered videos
+      - name: upload rendered videos (artifact, every run)
         uses: actions/upload-artifact@v4
         with:
           name: tapes
@@ -57,10 +56,25 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: nix run .#build-site -- result _site
 
-      - name: deploy to gh-pages
+      - name: upload pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: _site
-          publish_branch: gh-pages
+          path: _site
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
