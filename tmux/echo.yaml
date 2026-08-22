@@ -1,0 +1,15 @@
+session_name: echo-demo
+
+options:
+  pane-border-status: top
+  pane-border-format: " #{pane_title} "
+
+windows:
+  - window_name: no-subbit
+    panes:
+      - shell_command:
+          - unset PROMPT_COMMAND
+          - PS1='[typist] > '
+          - source ./tmux/aliases.sh
+          - tmux select-pane -T typist
+          - clear
