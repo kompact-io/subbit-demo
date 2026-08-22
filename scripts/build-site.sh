@@ -11,8 +11,8 @@
 # own store path explicitly so it doesn't matter where the script itself
 # ends up on disk.
 #
-# Requires: jq, mustache (mustache-go), find, awk — all provided by the
-# `build-site` app in flake.nix, or the devShell.
+# Requires: jq, mustache (mustache-go), awk — provided by the `build-site`
+# app in flake.nix, or the devShell.
 set -euo pipefail
 
 usage() { echo "usage: $(basename "$0") <videos-dir> <site-out-dir> [template-dir]" >&2; exit 1; }
@@ -34,6 +34,11 @@ rm -rf "$site_dir"
 mkdir -p "$site_dir/videos"
 cp "$template_dir/style.css" "$site_dir/style.css"
 
+shopt -s nullglob nocaseglob
+files=("$videos_dir"/*.mp4 "$videos_dir"/*.webm "$videos_dir"/*.gif)
+shopt -u nullglob nocaseglob
+mapfile -t files < <(printf '%s\n' "${files[@]}" | sort)
+
 data_json=$(mktemp)
 trap 'rm -f "$data_json"' EXIT
 
@@ -41,7 +46,7 @@ count=0
 {
   printf '{"videos":['
   first=1
-  while IFS= read -r -d '' f; do
+  for f in "${files[@]}"; do
     base=$(basename "$f")
     stem=${base%.*}
     ext_lc=$(printf '%s' "${base##*.}" | tr '[:upper:]' '[:lower:]')
@@ -64,7 +69,7 @@ count=0
     count=$((count + 1))
     jq -n --arg title "$title" --arg file "$base" --arg mime "$mime" --arg stem "$stem" \
       '{title:$title, file:$file, mime:$mime, stem:$stem}'
-  done < <(find "$videos_dir" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.gif' \) -print0 | sort -z)
+  done
   printf ']}'
 } > "$data_json"
 
