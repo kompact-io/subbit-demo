@@ -37,6 +37,7 @@ cp "$template_dir/style.css" "$site_dir/style.css"
 data_json=$(mktemp)
 trap 'rm -f "$data_json"' EXIT
 
+count=0
 {
   printf '{"videos":['
   first=1
@@ -60,11 +61,14 @@ trap 'rm -f "$data_json"' EXIT
 
     [ "$first" -eq 1 ] || printf ','
     first=0
+    count=$((count + 1))
     jq -n --arg title "$title" --arg file "$base" --arg mime "$mime" --arg stem "$stem" \
       '{title:$title, file:$file, mime:$mime, stem:$stem}'
   done < <(find "$videos_dir" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.gif' \) -print0 | sort -z)
   printf ']}'
 } > "$data_json"
 
+[ "$count" -gt 0 ] || { echo "error: no videos found in $videos_dir - refusing to publish an empty gallery" >&2; exit 1; }
+
 mustache "$data_json" "$template_dir/index.mustache" > "$site_dir/index.html"
-echo "wrote $site_dir/index.html"
+echo "wrote $site_dir/index.html with $count video(s)"
