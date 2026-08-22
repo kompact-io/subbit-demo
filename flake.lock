@@ -302,11 +302,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1787410220,
-        "narHash": "sha256-VRwskqruLouqIMapEKqDZIL75nADrICweh8R9GF5KJM=",
+        "lastModified": 1787424284,
+        "narHash": "sha256-7Rs2UHxYb8OJP6Kd3N6AkOeRFD8yRXeB0HSwMUhhMe4=",
         "owner": "kompact-io",
         "repo": "subbit-xyz",
-        "rev": "e70e6075228bb1a27eec0991d0d3268a98efbb86",
+        "rev": "1e63237fd31ad7f7d98bc86e3e5488aef9199bff",
         "type": "github"
       },
       "original": {
