@@ -18,9 +18,9 @@
     flake-utils,
     subbit-xyz,
   }:
-    # FIXME :: aiken flake broken on darwin builds. disable until fixed
-    # flake-utils.lib.eachDefaultSystem (system: let
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system: let
+  # FIXME :: aiken flake broken on darwin builds. disable until fixed
+  # flake-utils.lib.eachDefaultSystem (system: let
+    flake-utils.lib.eachSystem ["x86_64-linux"] (system: let
       pkgs = import nixpkgs {inherit system;};
       lib = pkgs.lib;
 
@@ -54,7 +54,7 @@
           };
 
           nativeBuildInputs =
-            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go pkgs.cacert]
+            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go pkgs.cacert pkgs.ncurses]
             ++ subbitBins;
 
           dontConfigure = true;
@@ -80,7 +80,7 @@
 
           # vhs drives ttyd + a headless chromium (via rod). Chromium's own
           # sandbox can't set up inside nix's build sandbox, so we opt this
-          # derivation out of it (see NixOS/nixpkgs#455564). 
+          # derivation out of it (see NixOS/nixpkgs#455564).
           __noChroot = true;
 
           meta.description = "Rendered video(s) for tapes/${tapeFileName}";
