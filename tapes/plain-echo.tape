@@ -14,7 +14,7 @@ Set Height 800
 Set WaitTimeout 10s
 Set WaitPattern /\[typist\] > /
 
-# hidden: reset leftover session, load tmux, wait for it 
+# hidden: reset leftover session, load tmux, wait for it.
 Hide
 Type "tmux kill-session -t echo-demo 2>/dev/null; clear"
 Enter
