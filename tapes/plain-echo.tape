@@ -11,14 +11,15 @@ Set Shell "bash"
 Set FontSize 16
 Set Width 1400
 Set Height 800
+Set Theme Wombat
 Set WaitTimeout 10s
 Set WaitPattern /\[typist\] > /
 
 # hidden: reset leftover session, load tmux, wait for it.
 Hide
-Type "tmux kill-session -t echo-demo 2>/dev/null; clear"
+Type "tmux kill-session -t plain-echo 2>/dev/null; clear"
 Enter
-Type "tmuxp load ./tmux/echo.yaml"
+Type "tmuxp load -s plain-echo ./tmux/echo.yaml"
 Enter
 Wait+Screen
 Show

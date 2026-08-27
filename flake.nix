@@ -62,18 +62,6 @@
           buildPhase = ''
             runHook preBuild
             set -o pipefail
-            export HOME="$TMPDIR"
-            # Isolate this build's tmux server: by default tmux sockets live
-            # under /tmp/tmux-$(id -u), which is shared with sibling tape
-            # derivations building concurrently (this derivation sets
-            # __noChroot, so it sees the real host /tmp). Without this, two
-            # tapes racing to `tmuxp load ./tmux/echo.yaml` collide on the
-            # same session name ("echo-demo") on the same server, and one
-            # build's teardown/keystrokes can clobber the other's session
-            # mid-recording -- surfacing as flaky Wait+Screen timeouts even
-            # when the captured text looks like it matches.
-            export TMUX_TMPDIR="$TMPDIR/tmux"
-            mkdir -p "$TMUX_TMPDIR"
             export VHS_NO_SANDBOX=true
             export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             mkdir -p out
