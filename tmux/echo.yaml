@@ -12,4 +12,4 @@ windows:
           - PS1='[typist] > '
           - source ./tmux/aliases.sh
           - tmux select-pane -T typist
-          - clear
+          - printf '\033c'

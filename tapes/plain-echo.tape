@@ -16,7 +16,7 @@ Set WaitPattern /\[typist\] > /
 
 # hidden: reset leftover session, load tmux, wait for it 
 Hide
-Type "tmux kill-session -t echo-demo 2>/dev/null; clear"
+Type "tmux kill-session -t echo-demo 2>/dev/null; printf '\033c'"
 Enter
 Type "tmuxp load ./tmux/echo.yaml"
 Enter

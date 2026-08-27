@@ -108,7 +108,7 @@ pane() {
 
   tmux select-pane -t "$id" -T "$name"
   tmux send-keys -t "$id" \
-    "cd \"$workdir\"; unset PROMPT_COMMAND; PS1='[$name] > '; source $(pwd)/tmux/aliases.sh; clear" Enter
+    "cd \"$workdir\"; unset PROMPT_COMMAND; PS1='[$name] > '; source $(pwd)/tmux/aliases.sh; printf '\033c'" Enter
   _pane_wait_ready "$id" "$name"
 
   _PANE_DIRS+=("$workdir")
