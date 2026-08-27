@@ -62,6 +62,7 @@
           buildPhase = ''
             runHook preBuild
             set -o pipefail
+            export HOME="$TMPDIR"
             export VHS_NO_SANDBOX=true
             export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             mkdir -p out
@@ -193,7 +194,6 @@
           [
             bashInteractive # plain `bash` lacks readline (bind/complete); this fixes
             # "bind: command not found" when tmux/vhs spawn a bash shell
-            ncurses # provides `clear`, used by tmux/aliases.sh and the tapes
             tmux
             tmuxp
             vhs
