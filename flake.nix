@@ -34,85 +34,28 @@
         subbit-server
       ];
 
-      tapeDir = ./tapes;
-      tapeFiles =
-        builtins.attrNames
-        (lib.filterAttrs (n: t: t == "regular" && lib.hasSuffix ".tape" n)
-          (builtins.readDir tapeDir));
-
-      mkTapeVideo = tapeFileName: let
-        name = lib.removeSuffix ".tape" tapeFileName;
-      in
-        pkgs.stdenv.mkDerivation {
-          pname = "tape-${name}";
-          version = "0-unstable";
-          # whole repo, since tapes reference ./tmux/echo.yaml etc by relative path
-          src = lib.cleanSourceWith {
-            src = ./.;
-            filter = path: type:
-              baseNameOf path != "out" && baseNameOf path != "result";
-          };
-
-          nativeBuildInputs =
-            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.bashInteractive pkgs.jq pkgs.yq-go pkgs.cacert]
-            ++ subbitBins;
-
-          dontConfigure = true;
-
-          buildPhase = ''
-            runHook preBuild
-            set -o pipefail
-            export HOME="$TMPDIR"
-            export VHS_NO_SANDBOX=true
-            export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-            mkdir -p out
-            vhs "tapes/${tapeFileName}" 2>&1 | tee vhs.log
-            [ -n "$(find out -type f -print -quit)" ] || { echo "error: vhs produced no output in out/" >&2; exit 1; }
-            runHook postBuild
-          '';
-
-          installPhase = ''
-            runHook preInstall
-            mkdir -p "$out"
-            cp -r out/. "$out"/
-            runHook postInstall
-          '';
-
-          # vhs drives ttyd + a headless chromium (via rod). Chromium's own
-          # sandbox can't set up inside nix's build sandbox, so we opt this
-          # derivation out of it (see NixOS/nixpkgs#455564). 
-          __noChroot = true;
-
-          meta.description = "Rendered video(s) for tapes/${tapeFileName}";
-        };
-
-      tapePackages =
-        lib.listToAttrs
-        (map
-          (f: {
-            name = "tape-${lib.removeSuffix ".tape" f}";
-            value = mkTapeVideo f;
-          })
-          tapeFiles);
-
-      allTapes = pkgs.symlinkJoin {
-        name = "all-tapes";
-        paths = builtins.attrValues tapePackages;
-      };
-
       scripts = {
+        # vhs drives ttyd + a headless chromium (via rod). Chromium can't
+        # set up its own sandbox when this runs *inside* a nix build's
+        # sandbox -- __noChroot (see NixOS/nixpkgs#455564) only relaxes
+        # nix's filesystem/network isolation and wasn't enough on its own,
         record-tape = pkgs.writeShellApplication {
           name = "record-tape";
-          runtimeInputs = [pkgs.vhs pkgs.tmux pkgs.tmuxp];
+          runtimeInputs =
+            [pkgs.vhs pkgs.tmux pkgs.tmuxp pkgs.ffmpeg pkgs.jq pkgs.yq-go pkgs.cacert]
+            ++ subbitBins;
           meta.description = "Render a tape file: record-tape <tape-file>";
           text = ''
             if [ "$#" -ne 1 ]; then
               echo "usage: record-tape <tape-file>" >&2
               exit 1
             fi
+            export VHS_NO_SANDBOX=true
+            export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             mkdir -p out
             echo "Rendering $1 ..."
             vhs "$1"
+            [ -n "$(find out -type f -print -quit)" ] || { echo "error: vhs produced no output in out/" >&2; exit 1; }
           '';
         };
 
@@ -221,7 +164,5 @@
           meta.description = drv.meta.description;
         })
         scripts;
-
-      packages = tapePackages // {all-tapes = allTapes;};
     });
 }

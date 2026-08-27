@@ -36,26 +36,35 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@main
         with:
-          # vhs launches a headless chromium (via ttyd/rod) which can't set
-          # up its own sandbox inside nix's build sandbox, so tape
-          # derivations opt out via __noChroot
           extra-conf: |
-            sandbox = relaxed
             accept-flake-config = true
 
-      - name: build all tapes
-        run: nix build .#all-tapes -L --print-build-logs
+      - name: record tapes
+        # vhs launches a headless chromium (via ttyd/rod); running it inside
+        # a `nix build` derivation's sandbox breaks that even with
+        # __noChroot set, so tapes are recorded via `nix run` instead --
+        # nix only provisions the toolchain, and vhs executes directly in
+        # this job's own shell, one tape at a time (also sidesteps two
+        # tapes racing to create the same tmux session name).
+        run: |
+          set -o pipefail
+          mkdir -p out
+          for tape in tapes/*.tape; do
+            echo "::group::$tape"
+            nix run .#record-tape -- "$tape"
+            echo "::endgroup::"
+          done
 
       - name: upload rendered videos (artifact, every run)
         uses: actions/upload-artifact@v4
         with:
           name: tapes
-          path: result/
+          path: out/
           if-no-files-found: error
 
       - name: build site
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: nix run .#build-site -- result _site
+        run: nix run .#build-site -- out _site
 
       - name: upload pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
