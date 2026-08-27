@@ -5,7 +5,7 @@
 Require tmux
 Require tmuxp
 
-Output out/plain-echo.webm
+Output out/plain-echo.mp4
 
 Set Shell "bash"
 Set FontSize 16

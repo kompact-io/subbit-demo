@@ -3,34 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>subbit-demo-tapes</title>
+  <title>tapes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
     <header>
-      <div class="logo">&#128252; subbit-demo-tapes</div>
+      <div class="logo">&#128252; tapes</div>
       <nav><a href="https://github.com/kompact-io/subbit-xyz">github</a></nav>
     </header>
 
-    <h3>
-      Intro
-    </h3>
+    <h1>CLI demo tapes</h1>
+    <p class="tagline">Terminal demos, recorded as code with <a href="https://github.com/charmbracelet/vhs">vhs</a>, built reproducibly with Nix, rendered on every push.</p>
 
-    <p>
-      These demos focus on Subbit.xyz's L2 in application. 
-    </p>
-    
-    <p>
-      A demo is driven by the `typist`. 
-      They orchestrate the various services.
-      A service may belong to one or other party of a channel.
-    </p>
-    
-    <p>
-      The L1 component is mocked here. 
-      This allows the demo to be reproducible.
-    </p>
     <hr>
 
 {{#videos}}
@@ -47,7 +32,7 @@
 {{/videos}}
 
     <hr>
-    <footer>Terminal demos, recorded as code with <a href="https://github.com/charmbracelet/vhs">vhs</a>, built reproducibly with Nix, via github actions </footer>
+    <footer>Rendered from <code>tapes/*.tape</code> by GitHub Actions.</footer>
   </main>
 </body>
 </html>
