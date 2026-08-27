@@ -14,9 +14,9 @@ Set WaitTimeout 10s
 Set WaitPattern /\[typist\] > /
 
 Hide
-Type "tmux kill-session -t echo-demo 2>/dev/null; clear"
+Type "tmux kill-session -t subbit-echo 2>/dev/null; clear"
 Enter
-Type "tmuxp load ./tmux/echo.yaml"
+Type "tmuxp load -s subbit-echo ./tmux/echo.yaml"
 Enter
 Wait+Screen
 Show

@@ -44,7 +44,7 @@ jobs:
             accept-flake-config = true
 
       - name: build all tapes
-        run: nix build .#all-tapes -L --print-build-logs
+        run: nix build .#all-tapes -L --print-build-logs --max-jobs 1
 
       - name: upload rendered videos (artifact, every run)
         uses: actions/upload-artifact@v4
